@@ -125,7 +125,15 @@ src/
 │   ├── logger/                # Logging service
 │   │   └── logger.service.ts
 │   └── types/                 # TypeScript interfaces
-│       └── index.ts
+│       ├── auth/              # Authentication types
+│       │   ├── jwt-payload.interface.ts
+│       │   └── user-socket-connection.interface.ts
+│       └── notification/      # Notification types
+│           ├── notification.interface.ts
+│           ├── notification-queue-item.interface.ts
+│           └── enum/
+│               ├── notification-status.enum.ts
+│               └── notification-type.enum.ts
 │
 ├── config/                     # Configuration
 │   └── redis.service.ts       # Redis client
@@ -143,7 +151,7 @@ test/                           # Test files
 ### 1. Define Types (if needed)
 
 ```typescript
-// src/shared/types/index.ts
+// src/shared/types/my-domain/my-feature.interface.ts
 export interface MyFeatureEvent {
   id: string;
   userId: string;

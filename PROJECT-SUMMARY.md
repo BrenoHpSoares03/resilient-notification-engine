@@ -39,7 +39,15 @@ resilient-notification-engine/
 │   │   ├── logger/
 │   │   │   └── logger.service.ts           # Structured logging
 │   │   └── types/
-│   │       └── index.ts                    # TypeScript interfaces
+│   │       ├── auth/
+│   │       │   ├── jwt-payload.interface.ts       # JWT token interface
+│   │       │   └── user-socket-connection.interface.ts # WS connection
+│   │       └── notification/
+│   │           ├── notification.interface.ts      # Core notification
+│   │           ├── notification-queue-item.interface.ts # Queue item
+│   │           └── enum/
+│   │               ├── notification-status.enum.ts
+│   │               └── notification-type.enum.ts
 │   │
 │   ├── ⚙️  config/
 │   │   └── redis.service.ts                # Redis client & pooling

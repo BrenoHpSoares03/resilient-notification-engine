@@ -145,15 +145,27 @@ resilient-notification-engine/
 │   │   │                                    │ Structured logging
 │   │   │
 │   │   └── types/                          ─ TypeScript Interfaces
-│   │       └── index.ts                    │ All shared types
-│   │                                        │ JwtPayload, Notification, etc
+│   │       ├── auth/                       │ Authentication types
+│   │       │   ├── jwt-payload.interface.ts│ JWT token payload
+│   │       │   └── user-socket-connection.interface.ts
+│   │       │                                │ WebSocket connection
+│   │       │
+│   │       └── notification/               │ Notification types
+│   │           ├── notification.interface.ts
+│   │           │                            │ Core notification
+│   │           ├── notification-queue-item.interface.ts
+│   │           │                            │ Queue item definition
+│   │           └── enum/                   │ Enumerations
+│   │               ├── notification-status.enum.ts
+│   │               │                        │ PENDING, DELIVERED, READ, FAILED
+│   │               └── notification-type.enum.ts
+│   │                                        │ INFO, WARNING, ERROR, SUCCESS
 │   │
 │   ├── ⚙️ config/                          ─ Infrastructure Layer
 │   │   └── redis.service.ts                │ Redis client wrapper
 │   │                                        │ Connection pooling
 │   │                                        │ Error handling
 │   │
-│   ├── index.ts                            ─ Public API Exports
 │   ├── app.module.ts                       ─ Root Module
 │   └── main.ts                             ─ Application Bootstrap
 │

@@ -12,7 +12,7 @@
 // In your NestJS module where you need to send notifications:
 import { Injectable } from '@nestjs/common';
 import { NotificationsService } from '@/notifications/notifications.service';
-import { NotificationType } from '@/shared/types';
+import { NotificationType } from '@/shared/types/notification/enum/notification-type.enum';
 
 @Injectable()
 export class OrderService {

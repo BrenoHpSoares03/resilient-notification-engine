@@ -329,6 +329,57 @@ Implement adaptive delivery:
 
 ---
 
+## ADR 10: Modular Type Organization by Domain
+
+### Status: ACCEPTED
+
+### Context
+TypeScript interfaces and types need to be organized in a way that is:
+- Easy to find (descriptive filenames)
+- Scalable (one interface per file)
+- Maintainable (grouped by domain/context)
+- Explicit (avoiding wildcard imports via barrel exports)
+
+### Decision
+Organize types in `src/shared/types/` with:
+- **Domain-based directories**: `/auth`, `/notification`, etc
+- **Descriptive filenames**: `jwt-payload.interface.ts`, `notification.interface.ts`
+- **No barrel exports**: Each type file is imported directly
+- **Clear separation**: Enums in `/enum` subdirectory
+
+```
+src/shared/types/
+├── auth/
+│   ├── jwt-payload.interface.ts
+│   └── user-socket-connection.interface.ts
+└── notification/
+    ├── notification.interface.ts
+    ├── notification-queue-item.interface.ts
+    └── enum/
+        ├── notification-status.enum.ts
+        └── notification-type.enum.ts
+```
+
+### Rationale
+- **Clarity**: Filename immediately tells you what the file contains
+- **Type Safety**: No hidden exports via index files
+- **Scalability**: Easy to add new domains without modifying index files
+- **Developer Experience**: IDE can find types directly without searching
+- **Single Responsibility**: Each file has one clear purpose
+
+### Alternatives Considered
+1. **Barrel exports (index.ts)**: Less explicit, harder to track imports
+2. **Flat structure**: All types in one folder - hard to navigate
+3. **Framework-based organization**: Doesn't align with feature/domain
+
+### Consequences
+- Import paths are slightly longer but more explicit
+- Easier to track dependencies between types
+- Clear file organization makes onboarding simpler
+- No need to maintain index files
+
+---
+
 ## Summary: Technology Stack Decisions
 
 | Component | Technology | Why |
