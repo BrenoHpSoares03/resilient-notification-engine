@@ -11,6 +11,7 @@ import {
     Query,
     ValidationPipe,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { NotificationsGateway } from './notifications.gateway';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
@@ -18,6 +19,7 @@ import { AllExceptionsFilter } from '@/shared/filters/all-exceptions.filter';
 import { SendNotificationDto } from './dto/send-notification.dto';
 import { BatchNotificationResponseDto } from './dto/notification-response.dto';
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
+import { Public } from '@/shared/decorators/public.decorator';
 import { LoggerService } from '@/shared/logger/logger.service';
 import { JwtPayload } from '@/shared/types';
 
@@ -29,9 +31,11 @@ import { JwtPayload } from '@/shared/types';
  * - Retrieving notification history
  * - Marking notifications as read
  * 
- * All endpoints require JWT authentication
+ * Authentication: All endpoints require JWT bearer token except /health
  * Uses NotificationsGateway for real-time delivery via WebSocket
  */
+@ApiTags('Notifications')
+@ApiBearerAuth('bearer')
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
 @UseFilters(new AllExceptionsFilter(new LoggerService()))
@@ -43,30 +47,26 @@ export class NotificationsController {
     ) { }
 
     /**
-     * POST /notifications/send
-     * Send a notification to one or multiple users
-     * 
-     * Request body:
-     * {
-     *   "recipientId": "user-123",          // Single recipient
-     *   "recipientIds": ["user-1", ...],    // OR multiple recipients
-     *   "title": "Hello",
-     *   "message": "This is a notification",
-     *   "type": "INFO",
-     *   "senderId": "admin",                 // Optional
-     *   "data": { "key": "value" },         // Optional
-     *   "expiresIn": 604800                 // Optional, seconds (7 days default)
-     * }
-     * 
-     * Response on success (201):
-     * {
-     *   "total": 2,
-     *   "delivered": 1,
-     *   "queued": 1,
-     *   "failed": 0,
-     *   "timestamp": "2026-02-20T..."
-     * }
+     * Send notification to one user
+     * Creates and delivers a notification to a single recipient
      */
+    @ApiOperation({
+        summary: 'Send notification to user',
+        description: 'Send a notification to a single recipient. The notification is delivered immediately if the user is online, or queued for later delivery if offline.',
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'Notification sent successfully',
+        type: BatchNotificationResponseDto,
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid request body - missing required fields or invalid data',
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Unauthorized - missing or invalid JWT token',
+    })
     @Post('send')
     @HttpCode(HttpStatus.CREATED)
     async sendNotification(
@@ -124,19 +124,26 @@ export class NotificationsController {
     }
 
     /**
-     * GET /notifications/send/batch
-     * Send same notification to multiple users in batch
-     * 
-     * Query parameters:
-     * - recipientIds (comma-separated): "user-1,user-2,user-3"
-     * - title: Notification title
-     * - message: Notification message
-     * - type: Notification type (SYSTEM, USER, ALERT, etc.)
-     * - expireIn (optional): Expiration in seconds
-     * 
-     * Uses query params for simplicity in some scenarios
-     * For complex cases, use POST /notifications/send
+     * Send notification to multiple users
+     * Sends the same notification to multiple recipients in a batch operation
      */
+    @ApiOperation({
+        summary: 'Send batch notifications',
+        description: 'Send the same notification to multiple recipients. Each recipient is processed individually, and the operation returns aggregated statistics on delivery status.',
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'Batch notifications sent successfully',
+        type: BatchNotificationResponseDto,
+    })
+    @ApiResponse({
+        status: 400,
+        description: 'Invalid request - recipientIds array is required for batch operations',
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Unauthorized - missing or invalid JWT token',
+    })
     @Post('send/batch')
     @HttpCode(HttpStatus.CREATED)
     async sendBatchNotification(
@@ -191,10 +198,21 @@ export class NotificationsController {
     }
 
     /**
-     * GET /notifications/pending/:userId
-     * Get pending (offline) notifications for current user
-     * Useful for manual sync or debugging
+     * Get pending notifications for current user
+     * Returns notifications that are queued for delivery to offline users
      */
+    @ApiOperation({
+        summary: 'Get pending notifications',
+        description: 'Retrieve notifications that are queued for delivery. These are typically notifications sent while the user was offline.',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Pending notifications retrieved successfully',
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Unauthorized - missing or invalid JWT token',
+    })
     @Get('pending')
     async getPendingNotifications(
         @CurrentUser() user: JwtPayload,
@@ -216,13 +234,33 @@ export class NotificationsController {
     }
 
     /**
-     * GET /notifications/history
      * Get notification history for current user
-     * 
-     * Query parameters:
-     * - limit (default: 20, max: 100)
-     * - offset (default: 0)
+     * Returns paginated list of notifications sent to the current user
      */
+    @ApiOperation({
+        summary: 'Get notification history',
+        description: 'Retrieve paginated notification history for the current user. Useful for displaying notification inbox or audit logs.',
+    })
+    @ApiQuery({
+        name: 'limit',
+        type: Number,
+        required: false,
+        description: 'Number of notifications to return (default: 20, max: 100)',
+    })
+    @ApiQuery({
+        name: 'offset',
+        type: Number,
+        required: false,
+        description: 'Number of notifications to skip for pagination (default: 0)',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Notification history retrieved successfully',
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Unauthorized - missing or invalid JWT token',
+    })
     @Get('history')
     async getNotificationHistory(
         @Query('limit') limit?: string,
@@ -253,11 +291,21 @@ export class NotificationsController {
     }
 
     /**
-     * POST /notifications/:notificationId/read
-     * Mark a specific notification as read
-     * 
-     * Called by client when user reads a notification
+     * Mark notification as read
+     * Updates the notification status to 'read' and records the read timestamp
      */
+    @ApiOperation({
+        summary: 'Mark notification as read',
+        description: 'Mark a specific notification as read. Called when the user opens or views a notification.',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Notification marked as read successfully',
+    })
+    @ApiResponse({
+        status: 401,
+        description: 'Unauthorized - missing or invalid JWT token',
+    })
     @Post(':notificationId/read')
     @HttpCode(HttpStatus.OK)
     async markAsRead(
@@ -276,10 +324,20 @@ export class NotificationsController {
     }
 
     /**
-     * GET /notifications/health
      * Health check endpoint
-     * Verifies notification service is running
+     * Verifies that the notification service is running and operational
+     * No authentication required - useful for load balancers and monitoring
      */
+    @ApiTags('Health')
+    @ApiOperation({
+        summary: 'Health check',
+        description: 'Check if the notification service is running and healthy. This endpoint does not require authentication.',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Service is healthy',
+    })
+    @Public()
     @Get('health')
     async healthCheck(): Promise<{ status: string; timestamp: string }> {
         return {

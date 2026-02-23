@@ -10,7 +10,6 @@ import { NotificationType } from '../src/shared/types';
 describe('NotificationsService', () => {
     let service: NotificationsService;
     let redisService: RedisService;
-    let logger: LoggerService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -46,7 +45,6 @@ describe('NotificationsService', () => {
 
         service = module.get<NotificationsService>(NotificationsService);
         redisService = module.get<RedisService>(RedisService);
-        logger = module.get<LoggerService>(LoggerService);
     });
 
     describe('createNotification', () => {
