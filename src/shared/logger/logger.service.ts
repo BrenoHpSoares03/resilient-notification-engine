@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as winston from 'winston';
 
-/**
- * Centralized logging service using Winston
- * Provides structured logging with multiple transports
- */
 @Injectable()
 export class LoggerService {
     private logger: winston.Logger;
@@ -25,7 +21,6 @@ export class LoggerService {
             ],
         });
 
-        // Add console transport in development
         if (process.env.NODE_ENV !== 'production') {
             this.logger.add(
                 new winston.transports.Console({
@@ -40,30 +35,18 @@ export class LoggerService {
         }
     }
 
-    /**
-     * Log information level message
-     */
     info(message: string, meta?: Record<string, any>) {
         this.logger.info(message, meta);
     }
 
-    /**
-     * Log error level message
-     */
     error(message: string, error?: Error | string, meta?: Record<string, any>) {
         this.logger.error(message, { error, ...meta });
     }
 
-    /**
-     * Log warning level message
-     */
     warn(message: string, meta?: Record<string, any>) {
         this.logger.warn(message, meta);
     }
 
-    /**
-     * Log debug level message
-     */
     debug(message: string, meta?: Record<string, any>) {
         this.logger.debug(message, meta);
     }

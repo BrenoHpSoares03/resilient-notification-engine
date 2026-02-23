@@ -14,24 +14,10 @@ import { NotificationsService } from './notifications.service';
 import { LoggerService } from '@/shared/logger/logger.service';
 import { WsJwtGuard } from '@/shared/guards/ws-jwt.guard';
 import { AllExceptionsWebSocketFilter } from '@/shared/filters/all-exceptions.filter';
-import { JwtPayload, Notification } from '@/shared/types';
+import { JwtPayload } from '@/shared/types/auth/jwt-payload.interface';
+import { Notification } from '@/shared/types/notification/notification.interface';
 import { CurrentWsUser } from '@/shared/decorators/current-user.decorator';
 
-/**
- * WebSocket Gateway for real-time notifications
- * 
- * Architecture highlights:
- * - Uses Socket.io with Redis adapter for horizontal scalability
- * - Implements JWT authentication for WebSocket connections
- * - Handles connection/disconnection lifecycle
- * - Delivers pending notifications on connection (catch-up)
- * - Broadcasts notifications in real-time
- * 
- * Scaling considerations:
- * - Redis adapter allows multiple server instances
- * - User socket mapping stored in Redis (shared state)
- * - Notifications queued in Redis for offline users
- */
 @WebSocketGateway({
     namespace: '/notifications',
     cors: {
@@ -50,14 +36,8 @@ export class NotificationsGateway
         private logger: LoggerService,
     ) { }
 
-    /**
-     * Initialize gateway after server starts
-     * Setup Redis adapter for horizontal scalability
-     */
     async afterInit() {
         try {
-            // For single instance deployment, skip Redis adapter
-            // In production with multiple instances, configure Redis adapter per instance
             this.logger.info('WebSocket Gateway initialized (single instance mode)');
             this.logger.info('For horizontal scaling with Redis adapter, configure in production setup');
         } catch (error) {
@@ -67,13 +47,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * Handle client connection
-     * - Authenticate via JWT (guard)
-     * - Register socket mapping
-     * - Deliver pending notifications (catch-up)
-     * - Emit ready event to client
-     */
     @UseGuards(WsJwtGuard)
     async handleConnection(client: Socket) {
         try {
@@ -107,10 +80,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * Handle client disconnection
-     * Remove socket mapping from Redis
-     */
     async handleDisconnect(client: Socket) {
         try {
             const user: JwtPayload = client.data?.user;
@@ -125,10 +94,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * WebSocket event: Mark notification as read
-     * Called when user interacts with notification
-     */
     @SubscribeMessage('notification:read')
     async handleNotificationRead(
         @MessageBody() data: { notificationId: string },
@@ -169,9 +134,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * WebSocket event: Get user notification history
-     */
     @SubscribeMessage('notification:history')
     async handleGetHistory(
         @MessageBody() data: { limit?: number; offset?: number },
@@ -207,10 +169,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * Broadcast notification to specific user
-     * Used by NotificationsController
-     */
     async broadcastToUser(userId: string, notification: Notification) {
         try {
             /**
@@ -231,9 +189,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * Broadcast notification to multiple users
-     */
     async broadcastToUsers(userIds: string[], notification: Notification) {
         try {
             for (const userId of userIds) {
@@ -246,10 +201,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * Deliver pending notifications when user connects (catch-up)
-     * Critical for ensuring no notifications are lost
-     */
     private async deliverPendingNotifications(userId: string, client: Socket) {
         try {
             const notifications = await this.notificationsService.getPendingNotifications(userId);
@@ -298,10 +249,6 @@ export class NotificationsGateway
         }
     }
 
-    /**
-     * Health check event for keeping connections alive
-     */
-    @SubscribeMessage('ping')
     handlePing(@ConnectedSocket() client: Socket) {
         client.emit('pong', { timestamp: new Date().toISOString() });
     }

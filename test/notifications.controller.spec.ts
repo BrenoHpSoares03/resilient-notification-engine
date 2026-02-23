@@ -4,7 +4,8 @@ import { NotificationsService } from '../src/notifications/notifications.service
 import { NotificationsGateway } from '../src/notifications/notifications.gateway';
 import { LoggerService } from '../src/shared/logger/logger.service';
 import { SendNotificationDto } from '../src/notifications/dto/send-notification.dto';
-import { NotificationType, NotificationStatus } from '../src/shared/types';
+import { NotificationType } from '../src/shared/types/notification/enum/notification-type.enum';
+import { NotificationStatus } from '../src/shared/types/notification/enum/notification-status.enum';
 
 describe('NotificationsController', () => {
     let controller: NotificationsController;

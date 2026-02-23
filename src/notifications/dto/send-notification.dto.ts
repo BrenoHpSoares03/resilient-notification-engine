@@ -1,15 +1,8 @@
 import { IsString, IsOptional, IsEnum, IsObject, MinLength, MaxLength, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { NotificationType } from '@/shared/types';
+import { NotificationType } from '@/shared/types/notification/enum/notification-type.enum';
 
-/**
- * DTO for sending notification to one or multiple recipients
- * Supports batch operations
- */
 export class SendNotificationDto {
-    /**
-     * Single recipient ID
-     */
     @ApiPropertyOptional({
         type: String,
         description: 'Single recipient ID',
@@ -19,9 +12,6 @@ export class SendNotificationDto {
     @IsString()
     recipientId?: string;
 
-    /**
-     * Multiple recipient IDs for batch operations
-     */
     @ApiPropertyOptional({
         type: [String],
         description: 'Multiple recipient IDs for batch operations',
@@ -32,9 +22,6 @@ export class SendNotificationDto {
     @IsString({ each: true })
     recipientIds?: string[];
 
-    /**
-     * Notification title
-     */
     @ApiProperty({
         type: String,
         minLength: 1,
@@ -47,9 +34,6 @@ export class SendNotificationDto {
     @MaxLength(200)
     title!: string;
 
-    /**
-     * Notification message
-     */
     @ApiProperty({
         type: String,
         minLength: 1,
@@ -62,9 +46,6 @@ export class SendNotificationDto {
     @MaxLength(1000)
     message!: string;
 
-    /**
-     * Type of notification
-     */
     @ApiProperty({
         enum: NotificationType,
         description: 'Type of notification (in-app, email, sms, push)',
@@ -73,9 +54,6 @@ export class SendNotificationDto {
     @IsEnum(NotificationType)
     type!: NotificationType;
 
-    /**
-     * Optional sender ID
-     */
     @ApiPropertyOptional({
         type: String,
         description: 'Optional sender ID',
@@ -85,9 +63,6 @@ export class SendNotificationDto {
     @IsString()
     senderId?: string;
 
-    /**
-     * Additional metadata
-     */
     @ApiPropertyOptional({
         type: Object,
         description: 'Additional metadata as key-value pairs',
@@ -97,9 +72,6 @@ export class SendNotificationDto {
     @IsObject()
     data?: Record<string, any>;
 
-    /**
-     * Expiration time in seconds
-     */
     @ApiPropertyOptional({
         type: Number,
         description: 'Expiration time in seconds (default: 604800 = 7 days)',

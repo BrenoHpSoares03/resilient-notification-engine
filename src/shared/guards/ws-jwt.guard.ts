@@ -2,11 +2,6 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 import { JwtService } from '@nestjs/jwt';
 import { LoggerService } from '@/shared/logger/logger.service';
 
-/**
- * WebSocket JWT Guard
- * Validates JWT token in WebSocket connection handshake
- * Extracts token from query parameters or auth header
- */
 @Injectable()
 export class WsJwtGuard implements CanActivate {
     constructor(
@@ -14,12 +9,6 @@ export class WsJwtGuard implements CanActivate {
         private logger: LoggerService,
     ) { }
 
-    /**
-     * Validates WebSocket connection with JWT token
-     * Token can be passed as:
-     * - query parameter: ?token=<jwt>
-     * - handshake auth header: { Authorization: "Bearer <jwt>" }
-     */
     canActivate(context: ExecutionContext): boolean {
         try {
             const client = context.switchToWs().getClient();
@@ -42,16 +31,11 @@ export class WsJwtGuard implements CanActivate {
         }
     }
 
-    /**
-     * Extracts JWT token from WebSocket handshake
-     */
     private extractToken(client: any): string | null {
-        // Try query parameter first
         if (client.handshake?.query?.token) {
             return client.handshake.query.token;
         }
 
-        // Try auth header
         const authHeader = client.handshake?.headers?.authorization;
         if (authHeader?.startsWith('Bearer ')) {
             return authHeader.slice(7);

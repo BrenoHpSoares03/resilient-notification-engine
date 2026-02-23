@@ -4,28 +4,14 @@ import { RedisService } from '@/config/redis.service';
 import { LoggerService } from '@/shared/logger/logger.service';
 import {
     Notification,
-    NotificationStatus,
+} from '@/shared/types/notification/notification.interface';
+import { NotificationStatus } from '@/shared/types/notification/enum/notification-status.enum';
+import {
     UserSocketConnection,
-} from '@/shared/types';
+} from '@/shared/types/auth/user-socket-connection.interface';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { SendNotificationDto } from './dto/send-notification.dto';
 
-/**
- * Notifications Service - Core business logic for notification management
- * 
- * Responsibilities:
- * - Create and validate notifications
- * - Route notifications (WebSocket vs Redis queue)
- * - Manage user socketId mappings
- * - Handle pending notification delivery (catch-up)
- * - Implement retry logic for failed deliveries
- * 
- * Architecture decisions:
- * - Use Redis hashes for userId -> socketId mapping (fast lookups)
- * - Use Redis lists for notification queues (ordered delivery)
- * - Implement TTL on pending notifications (prevent infinite storage)
- * - Support horizontal scaling via Redis data sharing
- */
 @Injectable()
 export class NotificationsService {
     // Redis key prefixes
@@ -38,10 +24,6 @@ export class NotificationsService {
         private logger: LoggerService,
     ) { }
 
-    /**
-     * Create a new notification
-     * Validates input and generates unique ID
-     */
     async createNotification(dto: CreateNotificationDto): Promise<Notification> {
         try {
             const notification: Notification = {
@@ -70,10 +52,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Send a notification to one or multiple recipients
-     * Attempts instant delivery via WebSocket; queues for offline users
-     */
     async sendNotification(dto: SendNotificationDto): Promise<{
         delivered: string[];
         queued: string[];
@@ -107,17 +85,14 @@ export class NotificationsService {
                     const socketId = await this.getUserSocketId(recipientId);
 
                     if (socketId) {
-                        // User is online - mark for instant delivery
                         delivered.push(recipientId);
                         this.logger.debug(`Notification routed to WebSocket: ${recipientId}`);
                     } else {
-                        // User is offline - queue for later delivery
                         await this.queueNotification(notification);
                         queued.push(recipientId);
                         this.logger.debug(`Notification queued for offline user: ${recipientId}`);
                     }
 
-                    // Store notification metadata
                     await this.storeNotification(notification);
                 } catch (error) {
                     const currentErrorMessage = error instanceof Error ? error.message : String(error);
@@ -141,11 +116,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Register user socket connection
-     * Called when user connects via WebSocket
-     * Stores mapping in Redis for horizontal scalability
-     */
     async registerUserSocket(userId: string, socketId: string): Promise<void> {
         try {
             const connection: UserSocketConnection = {
@@ -166,10 +136,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Unregister user socket connection
-     * Called when user disconnects
-     */
     async unregisterUserSocket(userId: string): Promise<void> {
         try {
             const key = `${this.USER_SOCKET_KEY_PREFIX}${userId}`;
@@ -183,10 +149,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Get socket ID for a user
-     * Returns null if user is offline
-     */
     async getUserSocketId(userId: string): Promise<string | null> {
         try {
             const key = `${this.USER_SOCKET_KEY_PREFIX}${userId}`;
@@ -205,10 +167,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Queue notification for offline users
-     * Uses Redis list for FIFO ordering
-     */
     private async queueNotification(notification: Notification): Promise<void> {
         try {
             const key = `${this.PENDING_NOTIFICATIONS_KEY_PREFIX}${notification.recipientId}`;
@@ -235,9 +193,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Store notification metadata for audit/history
-     */
     private async storeNotification(notification: Notification): Promise<void> {
         try {
             const key = `${this.NOTIFICATION_KEY_PREFIX}${notification.id}`;
@@ -253,10 +208,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Get pending notifications for a user (catch-up logic)
-     * Called when user connects to deliver offline notifications
-     */
     async getPendingNotifications(userId: string): Promise<Notification[]> {
         try {
             const key = `${this.PENDING_NOTIFICATIONS_KEY_PREFIX}${userId}`;
@@ -285,10 +236,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Clear pending notifications queue after successful delivery
-     * Called after catch-up delivery
-     */
     async clearPendingNotifications(userId: string): Promise<void> {
         try {
             const key = `${this.PENDING_NOTIFICATIONS_KEY_PREFIX}${userId}`;
@@ -302,9 +249,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Mark notification as delivered
-     */
     async markAsDelivered(notificationId: string): Promise<void> {
         try {
             const key = `${this.NOTIFICATION_KEY_PREFIX}${notificationId}`;
@@ -325,9 +269,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Mark notification as read
-     */
     async markAsRead(notificationId: string): Promise<void> {
         try {
             const key = `${this.NOTIFICATION_KEY_PREFIX}${notificationId}`;
@@ -348,9 +289,6 @@ export class NotificationsService {
         }
     }
 
-    /**
-     * Get notification history for a user
-     */
     async getNotificationHistory(
         userId: string,
         _limit: number = 20,

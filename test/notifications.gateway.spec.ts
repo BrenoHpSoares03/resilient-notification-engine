@@ -1,7 +1,8 @@
 import { NotificationsGateway } from '../src/notifications/notifications.gateway';
 import { NotificationsService } from '../src/notifications/notifications.service';
 import { LoggerService } from '../src/shared/logger/logger.service';
-import { NotificationType, NotificationStatus } from '../src/shared/types';
+import { NotificationStatus } from '../src/shared/types/notification/enum/notification-status.enum';
+import { NotificationType } from '../src/shared/types/notification/enum/notification-type.enum';
 
 /**
  * Unit tests for Notifications WebSocket Gateway

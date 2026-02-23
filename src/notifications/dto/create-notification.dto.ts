@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsObject, MinLength, MaxLength } from 'class-validator';
-import { NotificationType } from '@/shared/types';
+import { NotificationType } from '@/shared/types/notification/enum/notification-type.enum';
 
 /**
  * DTO for creating a notification

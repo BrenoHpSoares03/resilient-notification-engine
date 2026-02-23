@@ -2,10 +2,6 @@ import { Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common'
 import { BaseWsExceptionFilter } from '@nestjs/websockets';
 import { LoggerService } from '@/shared/logger/logger.service';
 
-/**
- * Global exception filter for WebSocket events
- * Handles errors and logs them consistently
- */
 @Catch()
 export class AllExceptionsWebSocketFilter extends BaseWsExceptionFilter {
     constructor(private logger: LoggerService) {
@@ -16,7 +12,6 @@ export class AllExceptionsWebSocketFilter extends BaseWsExceptionFilter {
         const client = host.switchToWs().getClient();
         const message = host.switchToWs().getData();
 
-        // Create error response
         const error = exception instanceof Error ? exception : new Error(String(exception));
 
         this.logger.error(
@@ -25,7 +20,6 @@ export class AllExceptionsWebSocketFilter extends BaseWsExceptionFilter {
             { userId: client.data?.user?.userId, message },
         );
 
-        // Send error to client
         client.emit('error', {
             type: 'error',
             message: error.message || 'Internal server error',
@@ -34,10 +28,6 @@ export class AllExceptionsWebSocketFilter extends BaseWsExceptionFilter {
     }
 }
 
-/**
- * Global HTTP exception filter
- * Formats and logs HTTP errors consistently
- */
 @Catch()
 export class AllExceptionsFilter {
     constructor(private logger: LoggerService) { }

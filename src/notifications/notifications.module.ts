@@ -8,19 +8,6 @@ import { RedisService } from '@/config/redis.service';
 import { LoggerService } from '@/shared/logger/logger.service';
 import { JwtStrategy } from '@/shared/guards/jwt.strategy';
 
-/**
- * Notifications Module
- * 
- * Encapsulates all notification-related functionality:
- * - REST API endpoints for sending/managing notifications
- * - WebSocket gateway for real-time delivery
- * - Business logic for notification routing
- * - Integration with Redis for persistence and scaling
- * 
- * Exported services:
- * - NotificationsService: Core business logic
- * - NotificationsGateway: WebSocket gateway
- */
 @Module({
     imports: [
         PassportModule.register({ defaultStrategy: 'jwt' }),

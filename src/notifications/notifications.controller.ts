@@ -21,19 +21,9 @@ import { BatchNotificationResponseDto } from './dto/notification-response.dto';
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import { Public } from '@/shared/decorators/public.decorator';
 import { LoggerService } from '@/shared/logger/logger.service';
-import { JwtPayload } from '@/shared/types';
+import { JwtPayload } from '@/shared/types/auth/jwt-payload.interface';
 
-/**
- * Notifications REST API Controller
- * 
- * Provides endpoints for:
- * - Sending notifications to users
- * - Retrieving notification history
- * - Marking notifications as read
- * 
- * Authentication: All endpoints require JWT bearer token except /health
- * Uses NotificationsGateway for real-time delivery via WebSocket
- */
+
 @ApiTags('Notifications')
 @ApiBearerAuth('bearer')
 @Controller('notifications')
@@ -46,10 +36,6 @@ export class NotificationsController {
         private logger: LoggerService,
     ) { }
 
-    /**
-     * Send notification to one user
-     * Creates and delivers a notification to a single recipient
-     */
     @ApiOperation({
         summary: 'Send notification to user',
         description: 'Send a notification to a single recipient. The notification is delivered immediately if the user is online, or queued for later delivery if offline.',
@@ -79,10 +65,8 @@ export class NotificationsController {
                 type: dto.type,
             });
 
-            // Send notification via service
             const result = await this.notificationsService.sendNotification(dto);
 
-            // Attempt real-time delivery via WebSocket for all online users
             if (result.delivered.length > 0) {
                 try {
                     const notification = await this.notificationsService.createNotification({
@@ -95,12 +79,10 @@ export class NotificationsController {
                         expiresIn: dto.expiresIn,
                     });
 
-                    // Broadcast to gateway for real-time delivery
                     await this.notificationsGateway.broadcastToUsers(result.delivered, notification);
                 } catch (error) {
                     const msg = error instanceof Error ? error.message : String(error);
                     this.logger.warn('Failed to broadcast notification via WebSocket', { error: msg });
-                    // Notification is queued, so non-critical failure
                 }
             }
 
@@ -123,10 +105,6 @@ export class NotificationsController {
         }
     }
 
-    /**
-     * Send notification to multiple users
-     * Sends the same notification to multiple recipients in a batch operation
-     */
     @ApiOperation({
         summary: 'Send batch notifications',
         description: 'Send the same notification to multiple recipients. Each recipient is processed individually, and the operation returns aggregated statistics on delivery status.',
@@ -155,7 +133,6 @@ export class NotificationsController {
                 throw new BadRequestException('recipientIds array is required for batch operations');
             }
 
-            // Iterate and send to each recipient
             const allResults = {
                 delivered: [] as string[],
                 queued: [] as string[],
@@ -197,10 +174,6 @@ export class NotificationsController {
         }
     }
 
-    /**
-     * Get pending notifications for current user
-     * Returns notifications that are queued for delivery to offline users
-     */
     @ApiOperation({
         summary: 'Get pending notifications',
         description: 'Retrieve notifications that are queued for delivery. These are typically notifications sent while the user was offline.',
@@ -233,10 +206,6 @@ export class NotificationsController {
         }
     }
 
-    /**
-     * Get notification history for current user
-     * Returns paginated list of notifications sent to the current user
-     */
     @ApiOperation({
         summary: 'Get notification history',
         description: 'Retrieve paginated notification history for the current user. Useful for displaying notification inbox or audit logs.',
@@ -290,10 +259,6 @@ export class NotificationsController {
         }
     }
 
-    /**
-     * Mark notification as read
-     * Updates the notification status to 'read' and records the read timestamp
-     */
     @ApiOperation({
         summary: 'Mark notification as read',
         description: 'Mark a specific notification as read. Called when the user opens or views a notification.',
@@ -323,11 +288,6 @@ export class NotificationsController {
         }
     }
 
-    /**
-     * Health check endpoint
-     * Verifies that the notification service is running and operational
-     * No authentication required - useful for load balancers and monitoring
-     */
     @ApiTags('Health')
     @ApiOperation({
         summary: 'Health check',

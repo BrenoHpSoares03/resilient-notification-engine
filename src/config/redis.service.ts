@@ -2,10 +2,6 @@ import { Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import { LoggerService } from '@/shared/logger/logger.service';
 
-/**
- * Redis configuration and connection management
- * Handles connection pooling and error handling
- */
 @Injectable()
 export class RedisService {
     private client!: Redis;
@@ -15,9 +11,6 @@ export class RedisService {
         this.initializeClients();
     }
 
-    /**
-     * Initialize Redis clients with error handling
-     */
     private initializeClients() {
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         const redisOptions = {
@@ -58,23 +51,14 @@ export class RedisService {
         }
     }
 
-    /**
-     * Get the main Redis client
-     */
     getClient(): Redis {
         return this.client;
     }
 
-    /**
-     * Get the subscriber Redis client
-     */
     getSubscriber(): Redis {
         return this.subscriberClient;
     }
 
-    /**
-     * Set key-value pair with optional expiration
-     */
     async set(key: string, value: string, expiresIn?: number): Promise<void> {
         try {
             if (expiresIn) {
@@ -90,9 +74,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Get value by key
-     */
     async get(key: string): Promise<string | null> {
         try {
             const value = await this.client.get(key);
@@ -105,9 +86,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Delete one or multiple keys
-     */
     async delete(...keys: string[]): Promise<number> {
         try {
             const count = await this.client.del(...keys);
@@ -120,9 +98,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Push value to list
-     */
     async lpush(key: string, value: string): Promise<number> {
         try {
             const length = await this.client.lpush(key, value);
@@ -135,9 +110,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Pop value from list
-     */
     async rpop(key: string): Promise<string | null> {
         try {
             const value = await this.client.rpop(key);
@@ -150,9 +122,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Get range of list
-     */
     async lrange(key: string, start: number, stop: number): Promise<string[]> {
         try {
             const values = await this.client.lrange(key, start, stop);
@@ -165,9 +134,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Set hash field
-     */
     async hset(key: string, field: string, value: string): Promise<number> {
         try {
             const result = await this.client.hset(key, field, value);
@@ -180,9 +146,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Get hash field
-     */
     async hget(key: string, field: string): Promise<string | null> {
         try {
             const value = await this.client.hget(key, field);
@@ -195,9 +158,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Get all hash fields
-     */
     async hgetall(key: string): Promise<Record<string, string>> {
         try {
             const value = await this.client.hgetall(key);
@@ -210,9 +170,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Delete hash field
-     */
     async hdel(key: string, field: string): Promise<number> {
         try {
             const result = await this.client.hdel(key, field);
@@ -225,9 +182,6 @@ export class RedisService {
         }
     }
 
-    /**
-     * Close Redis connections gracefully
-     */
     async close(): Promise<void> {
         try {
             await this.client.quit();

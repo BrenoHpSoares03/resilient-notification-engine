@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from '../src/notifications/notifications.service';
 import { RedisService } from '../src/config/redis.service';
 import { LoggerService } from '../src/shared/logger/logger.service';
-import { NotificationType } from '../src/shared/types';
+import { NotificationType } from '../src/shared/types/notification/enum/notification-type.enum';
 
 /**
  * Unit tests for NotificationsService
